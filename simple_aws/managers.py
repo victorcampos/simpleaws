@@ -1,7 +1,4 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import os
 
 from boto.opsworks.layer1 import OpsWorksConnection
 
@@ -20,15 +17,23 @@ class OpsWorksInstanceManager:
 
         self.instances = []
 
+    def get_instance(self, instance_index):
+        return self.instances[instance_index]
+
     def list_instances(self):
-        self.instances = self.connection.describe_instances(
+        instances = self.connection.describe_instances(
             layer_id=self.layer_id)['Instances']
+
+        counter = 0
+        for instance in instances:
+            if self.show_offline or instance['Status'] == 'online':
+                self.instances.append(instance)
+                counter += 1
 
         return self.instances
 
     def print_instances(self):
         instances = self.list_instances(self.layer_id)
 
-        for (counter, instance) in enumerate(instances):
-            if not self.show_offline and instance['Status'] == 'online':
-                print "%d) %s" % (counter, instance[u'Hostname'])
+        for counter, instance in enumerate(instances):
+            print "%d) %s" % (counter, instance[u'Hostname'])

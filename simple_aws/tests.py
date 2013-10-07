@@ -18,7 +18,7 @@ class OpsWorksManagerTest(unittest.TestCase):
                              aws_secret_access_key='test')]
             self.assertEqual(expected, connection_mock.mock_calls)
 
-    def test_list_instances(self):
+    def test_list_instances_calls_describe_instances_with_layer_id(self):
         with patch('managers.OpsWorksConnection') as connection_mock:
             manager = OpsWorksInstanceManager(aws_access_key_id='test',
                                               aws_secret_access_key='test',
@@ -28,6 +28,42 @@ class OpsWorksManagerTest(unittest.TestCase):
             self.assertTrue(
                 call().describe_instances(layer_id='test') in
                 connection_mock.mock_calls)
+
+    def test_list_instances_generate_list_of_online_instances(self):
+        with patch('managers.OpsWorksConnection') as connection_mock:
+            conn_instance = connection_mock.return_value
+            conn_instance.describe_instances.return_value = {
+                'Instances': [
+                    {'Status': 'online'},
+                    {'Status': 'online'},
+                    {'Status': 'offline'}
+                ]
+            }
+
+            manager = OpsWorksInstanceManager(aws_access_key_id='test',
+                                              aws_secret_access_key='test',
+                                              layer_id='test')
+            instances = manager.list_instances()
+
+            self.assertEqual(2, len(instances))
+
+    def test_list_instances_generate_list_with_offline_instances(self):
+        with patch('managers.OpsWorksConnection') as connection_mock:
+            conn_instance = connection_mock.return_value
+            conn_instance.describe_instances.return_value = {
+                'Instances': [
+                    {'Status': 'online'},
+                    {'Status': 'online'},
+                    {'Status': 'offline'}
+                ]
+            }
+
+            manager = OpsWorksInstanceManager(aws_access_key_id='test',
+                                              aws_secret_access_key='test',
+                                              layer_id='test', offline=True)
+            instances = manager.list_instances()
+
+            self.assertEqual(3, len(instances))
 
 
 class MainTests(unittest.TestCase):
