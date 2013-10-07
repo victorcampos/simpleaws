@@ -3,6 +3,9 @@ aws_secret_access_key: YOUR_SECRET_ACCESS_KEY
 layer_id: OPSWORKS_LAYER_ID
 
 ssh:
-  path: PATH_TO_SSH_KEY
+  key_path: PATH_TO_SSH_KEY
   user: DEFAULT_USER_TO_SSH
-  command: osascript -e 'tell app \"Terminal\"\n do script \"$ssh_command\" \nend tell'
+  command: |
+           osascript -e 'tell app "Terminal"
+           do script "$ssh_command"
+           end tell'

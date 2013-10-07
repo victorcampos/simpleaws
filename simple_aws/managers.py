@@ -33,7 +33,7 @@ class OpsWorksInstanceManager:
         return self.instances
 
     def print_instances(self):
-        instances = self.list_instances(self.layer_id)
+        instances = self.list_instances()
 
         for counter, instance in enumerate(instances):
-            print "%d) %s" % (counter, instance[u'Hostname'])
+            print "%d) %s" % (counter + 1, instance[u'Hostname'])

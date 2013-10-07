@@ -19,16 +19,17 @@ def main():
 
     config = read_config(args['config_path'])
     layer_id = config['layer_id'] if not args['layer_id'] else args['layer_id']
+
     manager = OpsWorksInstanceManager(
         aws_access_key_id=config['aws_access_key_id'],
-        aws_secret_access_key=config['aws_secret_key_id'],
+        aws_secret_access_key=config['aws_secret_access_key'],
         layer_id=layer_id,
         offline=args['offline'])
 
     manager.print_instances()
 
     instance_index = input("Choose an instance to connect: ")
-    instance = manager.get_instance(instance_index)
+    instance = manager.get_instance(instance_index - 1)
 
     connect_to_instance(instance, config)
 
