@@ -3,7 +3,7 @@
 import unittest
 from mock import patch, call
 
-from managers import OpsWorksInstanceManager
+from managers import OpsWorksInstanceManager, EC2InstanceManager
 from main import get_execution_command, connect_to_instance
 
 
@@ -66,23 +66,34 @@ class OpsWorksManagerTest(unittest.TestCase):
             self.assertEqual(3, len(instances))
 
 
+class EC2InstanceManagerTests(unittest.TestCase):
+
+    def test_list_instances_named(self):
+        with patch('managers.EC2Connection') as connection_mock:
+            manager = EC2InstanceManager(aws_access_key_id='test',
+                                         aws_secret_access_key='test')
+
+            manager.list_instances_named('test')
+
+            self.assertTrue(call().get_only_instances(
+                filters={'tag:Name': 'test*'}) in connection_mock.mock_calls)
+
+
 class MainTests(unittest.TestCase):
 
     def test_get_execution_command(self):
-        instance = {u'PublicDns': 'test'}
         config = {'ssh': {'user': 'test', 'key_path': 'test_path'}}
 
-        command = get_execution_command(instance, config)
+        command = get_execution_command('test', config)
         self.assertEqual('ssh -i test_path test@test', command)
 
     def test_connect_to_instance_command_execution(self):
         with patch('main.os') as mocked_os:
-            instance = {u'PublicDns': 'test'}
             config = {'ssh': {'user': 'test',
                               'key_path': 'test_path',
                               'command': 'command_test $ssh_command'}}
 
-            connect_to_instance(instance, config)
+            connect_to_instance('test', config)
             self.assertTrue(
                 call.system('command_test ssh -i test_path test@test') in
                 mocked_os.mock_calls)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from boto.opsworks.layer1 import OpsWorksConnection
+from boto.ec2.connection import EC2Connection
 
 
 class OpsWorksInstanceManager:
@@ -37,3 +38,31 @@ class OpsWorksInstanceManager:
 
         for counter, instance in enumerate(instances):
             print "%d) %s" % (counter + 1, instance[u'Hostname'])
+
+
+class EC2InstanceManager:
+
+    def __init__(self, aws_access_key_id=None,
+                 aws_secret_access_key=None):
+        self.connection = EC2Connection(
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key)
+
+        self.instances = []
+
+    def get_instance(self, instance_index):
+        return self.instances[instance_index]
+
+    def list_instances_named(self, name, partial=True):
+        instance_name = "%s*" % name if partial else name
+
+        self.instances = self.connection.get_only_instances(
+            filters={'tag:Name': instance_name})
+
+        return self.instances
+
+    def print_instances(self, name):
+        instances = self.list_instances_named(name)
+
+        for counter, instance in enumerate(instances):
+            print "%d) %s" % (counter + 1, instance.tags['Name'])

@@ -11,27 +11,21 @@ try:
 except ImportError:
     from yaml import Loader
 
-from managers import OpsWorksInstanceManager
+from managers import OpsWorksInstanceManager, EC2InstanceManager
 
 
 def main():
     args = vars(parse_args())
 
     config = read_config(args['config_path'])
-    layer_id = config['layer_id'] if not args['layer_id'] else args['layer_id']
 
-    manager = OpsWorksInstanceManager(
-        aws_access_key_id=config['aws_access_key_id'],
-        aws_secret_access_key=config['aws_secret_access_key'],
-        layer_id=layer_id,
-        offline=args['offline'])
+    conn_type = raw_input(
+        "Would you like to list EC2 (1) or OpsWorks (2) instances? [1,2] ")
 
-    manager.print_instances()
-
-    instance_index = input("Choose an instance to connect: ")
-    instance = manager.get_instance(instance_index - 1)
-
-    connect_to_instance(instance, config)
+    if conn_type is '1':
+        ec2(args, config)
+    elif conn_type is '2':
+        opsworks(args, config)
 
 
 def parse_args():
@@ -59,16 +53,47 @@ def read_config(config_path):
     return load(open(config_path), Loader=Loader)
 
 
-def connect_to_instance(instance, config):
-    ssh_command = get_execution_command(instance, config)
+def ec2(args, config):
+    manager = EC2InstanceManager(
+        aws_access_key_id=config['aws_access_key_id'],
+        aws_secret_access_key=config['aws_secret_access_key'])
+
+    search_query = raw_input("Search for name: ")
+    manager.print_instances(search_query)
+
+    instance_index = input("Choose an instance to connect: ")
+    instance = manager.get_instance(instance_index - 1)
+
+    connect_to_instance(instance.public_dns_name, config)
+
+
+def opsworks(args, config):
+    layer_id = config['layer_id'] if not args['layer_id'] else args['layer_id']
+
+    manager = OpsWorksInstanceManager(
+        aws_access_key_id=config['aws_access_key_id'],
+        aws_secret_access_key=config['aws_secret_access_key'],
+        layer_id=layer_id,
+        offline=args['offline'])
+
+    manager.print_instances()
+
+    instance_index = input("Choose an instance to connect: ")
+    instance = manager.get_instance(instance_index - 1)
+
+    connect_to_instance(instance[u'PublicDns'], config)
+
+
+def connect_to_instance(host, config):
+    ssh_command = get_execution_command(host, config)
     command_template = Template(config['ssh']['command'])
     command = command_template.substitute(ssh_command=ssh_command)
 
     os.system(command)
 
 
-def get_execution_command(instance, config):
-    hostname = "%s@%s" % (config['ssh']['user'], instance[u'PublicDns'],)
+def get_execution_command(host, config):
+    hostname = "%s@%s" % (config['ssh']['user'], host,)
     ssh_key_path = config['ssh']['key_path']
 
     ssh_command = "ssh -i %s %s" % (ssh_key_path, hostname)
