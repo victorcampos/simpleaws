@@ -19,18 +19,20 @@ def main():
 
     config = read_config(args['config_path'])
 
-    conn_type = raw_input(
-        "Would you like to list EC2 (1) or OpsWorks (2) instances? [1,2] ")
+    conn_type = args['service']
 
-    if conn_type is '1':
+    if conn_type == 'ec2':
         ec2(args, config)
-    elif conn_type is '2':
+    elif conn_type == 'opsworks':
         opsworks(args, config)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Connect to OpsWorks instances.')
+
+    parser.add_argument('service',
+                        help='service to connect', choices=['ec2', 'opsworks'])
     parser.add_argument('-c', '--config',
                         dest='config_path',
                         help='path to configuration file', required=True)

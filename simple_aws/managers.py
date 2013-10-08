@@ -72,3 +72,5 @@ class EC2InstanceManager:
 
         for counter, instance in enumerate(instances):
             print "%d) %s" % (counter + 1, instance.tags['Name'])
+
+
