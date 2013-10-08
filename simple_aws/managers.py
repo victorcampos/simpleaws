@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from operator import itemgetter
+
 from boto.opsworks.layer1 import OpsWorksConnection
 from boto.ec2.connection import EC2Connection
 
@@ -31,6 +33,8 @@ class OpsWorksInstanceManager:
                 self.instances.append(instance)
                 counter += 1
 
+        self.instances = sorted(self.instances, key=itemgetter(u'Hostname'))
+
         return self.instances
 
     def print_instances(self):
@@ -56,8 +60,10 @@ class EC2InstanceManager:
     def list_instances_named(self, name, partial=True):
         instance_name = "%s*" % name if partial else name
 
-        self.instances = self.connection.get_only_instances(
+        instances = self.connection.get_only_instances(
             filters={'tag:Name': instance_name})
+
+        self.instances = sorted(instances, key=lambda k: k.tags['Name'])
 
         return self.instances
 
